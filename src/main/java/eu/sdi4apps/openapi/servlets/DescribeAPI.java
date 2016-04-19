@@ -1,31 +1,32 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
 package eu.sdi4apps.openapi.servlets;
 
-import eu.sdi4apps.ftgeosearch.SearchResult;
-import eu.sdi4apps.ftgeosearch.Searcher;
+import eu.sdi4apps.openapi.config.Settings;
 import eu.sdi4apps.openapi.types.DataResponse;
+import eu.sdi4apps.openapi.types.Response;
 import eu.sdi4apps.openapi.utils.Cors;
-import eu.sdi4apps.openapi.utils.HttpParam;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.Date;
+import java.util.Properties;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.apache.commons.lang.math.NumberUtils;
-import org.apache.lucene.queryparser.classic.ParseException;
 
 /**
  *
  * @author runarbe
  */
-@WebServlet(urlPatterns = {"/search"})
-public class Search extends HttpServlet {
+@WebServlet(name = "DescribeAPI", urlPatterns = {"/DescribeAPI"})
+public class DescribeAPI extends HttpServlet {
 
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
@@ -37,42 +38,21 @@ public class Search extends HttpServlet {
      * @throws IOException if an I/O error occurs
      */
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException, ParseException {
+            throws ServletException, IOException {
 
         response = Cors.EnableCors(response);
 
-        DataResponse r = new DataResponse();
+        DataResponse ro = new DataResponse();
+        ro.parameters = request.getQueryString();
 
-        r.parameters = request.getQueryString();
-
-        PrintWriter out = response.getWriter();
-
-        try {
-
-            Map<String, Boolean> m = new LinkedHashMap<>();
-            m.put("q", true);
-            m.put("filter", false);
-            m.put("maxresults", false);
-            m.put("extent", false);
-
-            Map<String, Object> params = HttpParam.GetParameters(request, m, r);
-            if (r.status == "error") {
-                out.println(r.asJson());
-                return;
+        try (PrintWriter out = response.getWriter()) {
+            if (Settings.isReady == true) {
+                ro.setSuccess();
+            } else {
+                ro.setError("System not configured");
             }
-
-            List<Object> sres = Searcher.Search((String) params.get("q"),
-                    NumberUtils.toInt((String) params.get("maxresults"), 100),
-                    (String) params.get("filter"),
-                    (String) params.get("extent"));
-
-            r.setData(sres, true);
-            r.count = sres.size();
-
-        } catch (Exception e) {
-            r.addMessage("An error occurred: " + e.toString());
+            out.println(ro.asJson());
         }
-        out.println(r.asJson());
     }
 
     // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
@@ -87,11 +67,7 @@ public class Search extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        try {
-            processRequest(request, response);
-        } catch (ParseException ex) {
-            Logger.getLogger(Search.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        processRequest(request, response);
     }
 
     /**
@@ -105,11 +81,7 @@ public class Search extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        try {
-            processRequest(request, response);
-        } catch (ParseException ex) {
-            Logger.getLogger(Search.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        processRequest(request, response);
     }
 
     /**

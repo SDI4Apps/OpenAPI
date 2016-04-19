@@ -17,24 +17,50 @@ public class DbParams {
     public int dbPort = 5432;
     public String dbHost = "localhost";
 
-    public DbParams(String dbName, String dbUser, String dbPassword, int dbPort, String dbHost) {
+    public DbParams(String dbName, String dbUser, String dbPassword, String dbHost, Integer dbPort) throws Exception {
 
-        this.dbName = dbName;
-        this.dbUser = dbUser;
-        this.dbPassword = dbPassword;
-        this.dbPort = dbPort;
-        this.dbHost = dbHost;
+        try {
+            if (dbName == null) {
+                throw new Exception("Parameter dbName is null");
+            } else {
+                this.dbName = dbName;
+            }
+
+            if (dbUser == null) {
+                throw new Exception("Parameter dbUser is null");
+            } else {
+                this.dbUser = dbUser;
+            }
+
+            if (dbPassword == null) {
+                throw new Exception("Parameter dbPassword is null");
+            } else {
+                this.dbPassword = dbPassword;
+            }
+            
+            this.dbPort = dbPort;
+            
+            this.dbHost = dbHost;
+            
+        } catch (Exception exception) {
+            throw new Exception("Failed to create database parameters: " + exception.toString());
+        }
     }
 
-    public DbParams(String dbName, String dbUser, String dbPassword) {
-        this(dbName, dbUser, dbPassword, 5432, "localhost");
+    public DbParams(String dbName, String dbUser, String dbPassword, String dbHost) throws Exception {
+        this(dbName, dbUser, dbPassword, dbHost, 5432);
     }
-    
+
+    public DbParams(String dbName, String dbUser, String dbPassword) throws Exception {
+        this(dbName, dbUser, dbPassword, "localhost", 5432);
+    }
+
     /**
      * Return the JDBC URL of the respective setting
-     * @return 
+     *
+     * @return
      */
     public String getJdbcUrl() {
-            return "jdbc:postgresql://" + dbHost + ":" + dbPort + "/" + dbName + "?user=" + dbUser + "&password=" + dbPassword;
+        return "jdbc:postgresql://" + dbHost + ":" + dbPort + "/" + dbName + "?user=" + dbUser + "&password=" + dbPassword;
     }
 }

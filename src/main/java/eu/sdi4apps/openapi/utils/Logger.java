@@ -3,7 +3,13 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package eu.sdi4apps.ftgeosearch;
+package eu.sdi4apps.openapi.utils;
+
+import eu.sdi4apps.openapi.config.Settings;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 
 /**
  * Static logger class
@@ -11,6 +17,17 @@ package eu.sdi4apps.ftgeosearch;
  * @author runarbe
  */
 public class Logger {
+    
+    public static void LogToFile(String msg) {
+        try(FileWriter fw = new FileWriter(Settings.LOGDIR + "/openapi.log", true);
+            BufferedWriter bw = new BufferedWriter(fw);
+            PrintWriter out = new PrintWriter(bw))
+        {
+            out.println(msg);
+        } catch (IOException e) {
+            System.out.println("Logging to file failed: " + e.toString());
+        }
+    }
 
     /**
      * Log a message
@@ -19,6 +36,7 @@ public class Logger {
      */
     public static void Log(String msg) {
         System.out.println(msg);
+        LogToFile(msg);
     }
 
     /**
@@ -28,7 +46,8 @@ public class Logger {
      * @param msg
      */
     public static void Log(String title, String msg) {
-        Log(String.format("%s: %s", title, msg));
+        String msg2 = String.format("%s: %s", title, msg);
+        Log(msg2);
     }
     
 

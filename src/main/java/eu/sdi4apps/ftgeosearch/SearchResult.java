@@ -32,6 +32,11 @@ public class SearchResult {
      * JSON options
      */
     public static Map JsonOptions;
+    
+    /**
+     * Error message
+     */
+    public String ErrorMessage = null;
 
     /**
      * Search result status, one of the constants

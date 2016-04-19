@@ -8,16 +8,16 @@ package eu.sdi4apps.openapi.servlets;
 import eu.sdi4apps.ftgeosearch.DatasetType;
 import eu.sdi4apps.ftgeosearch.Indexer;
 import eu.sdi4apps.ftgeosearch.IndexerQueue;
-import eu.sdi4apps.ftgeosearch.Logger;
+import eu.sdi4apps.openapi.utils.Logger;
 import eu.sdi4apps.ftgeosearch.QueueItem;
 import eu.sdi4apps.ftgeosearch.drivers.ShapefileDriver;
+import eu.sdi4apps.openapi.config.Settings;
 import eu.sdi4apps.openapi.types.DataResponse;
-import eu.sdi4apps.openapi.types.Response;
 import eu.sdi4apps.openapi.utils.Cors;
 import eu.sdi4apps.openapi.utils.HttpParam;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.sql.SQLException;
+import java.nio.file.Paths;
 import static java.util.Arrays.asList;
 import java.util.HashMap;
 import java.util.List;
@@ -51,32 +51,41 @@ public class Index extends HttpServlet {
             String action = HttpParam.GetString(request, "action", "");
 
             switch (action) {
-                case "CreateIndex":
-                    Indexer.create(false);
-                    r.addMessage(action);
-                    break;
                 case "ViewQueue":
                     int maxEntries = HttpParam.GetInt(request, "maxEntries", 10);
                     r.setData(IndexerQueue.top(maxEntries), true);
                     break;
-                case "EnqueueItem":
-                    ShapefileDriver driver = new ShapefileDriver("C:/Users/runarbe/Documents/My Map Data/Natural Earth/10m_cultural/ne_10m_populated_places_simple.shp");
-                    List<String> titleFields = asList("name");
-                    String titleFormat = "Title: %s";
-                    List<String> descriptionFields = asList("featurecla", "adm0name", "sov0name");
-                    String descriptionFormat = "Class: %s, Adm0: %s, (Sov: %s)";
-                    List<String> additionalFields = asList("featurecla", "sov0name", "adm0name");
-                    List<String> jsonDataFields = asList("featurecla", "adm0name");
-                    QueueItem entry = QueueItem.create("Natural Earth Simple", DatasetType.Shapefile, driver, titleFields, titleFormat, descriptionFields, descriptionFormat, null, null);
-                    entry.additionalfields = additionalFields;
-                    entry.jsonDataFields = jsonDataFields;
-                    IndexerQueue.enqueue(entry);
-                    r.setData(entry, true);
+                case "UnlockIndex":
+                    Indexer.unlockIndex();
+                    break;
+                case "DropIndex":
+                    Indexer.dropIndex();
+                    break;
+                case "EnqueueItemTest":
+                    IndexerQueue.create();
+                    ShapefileDriver driver2 = new ShapefileDriver(Settings.SHAPEDIR + "/ne_10m_populated_places_simple.shp");
+                    List<String> titleFields2 = asList("name");
+                    String titleFormat2 = "Title: %s";
+                    List<String> descriptionFields2 = asList("featurecla", "adm0name", "sov0name");
+                    String descriptionFormat2 = "Class: %s, Adm0: %s, (Sov: %s)";
+                    List<String> additionalFields2 = asList("featurecla", "sov0name", "adm0name");
+                    List<String> jsonDataFields2 = asList("featurecla", "adm0name");
+                    QueueItem entry2 = QueueItem.create("Natural Earth Simple", "places", DatasetType.Shapefile, driver2, titleFields2, titleFormat2, descriptionFields2, descriptionFormat2, null, null, 4326);
+                    entry2.additionalfields = additionalFields2;
+                    entry2.jsondatafields = jsonDataFields2;
+                    IndexerQueue.enqueue(entry2);
+
+                    ShapefileDriver drv3 = new ShapefileDriver(Settings.SHAPEDIR + "/gn1000.shp");
+                    List<String> titleFields3 = asList("field_2");
+                    String titleFieldFormat3 = "%s";
+                    List<String> descFields3 = asList("field_4", "field_8", "field_18");
+                    String descFieldFormat3 = "Alternative forms: %s. Type of name %s in %s";
+                    QueueItem entry3 = QueueItem.create("Geonames 1000", "names", DatasetType.Shapefile, drv3, titleFields3, titleFieldFormat3, descFields3, descFieldFormat3, null, null, 4326);
+                    IndexerQueue.enqueue(entry3); 
+                    r.setData("Added two layers to index", true);
                     break;
                 case "EnqueueShapefile":
-
                     Map<String, Boolean> reqFields = new HashMap<String, Boolean>();
-
                     reqFields.put("shapefileName", true);
                     reqFields.put("titleFields", true);
                     reqFields.put("titleFormat", true);
