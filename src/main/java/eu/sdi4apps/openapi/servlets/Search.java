@@ -55,16 +55,23 @@ public class Search extends HttpServlet {
             m.put("maxresults", false);
             m.put("extent", false);
 
-            Map<String, Object> params = HttpParam.GetParameters(request, m, r);
+            Map<String, String> params = HttpParam.GetParameters(request, m, r);
             if (r.status == "error") {
                 out.println(r.asJson());
                 return;
             }
 
+            Integer maxResults;
+            if (params.get("maxresults") != null) {
+                maxResults = NumberUtils.toInt(params.get("maxresults"));
+            } else {
+                maxResults = null;
+            }
+
             List<Object> sres = Searcher.Search((String) params.get("q"),
-                    NumberUtils.toInt((String) params.get("maxresults"), 100),
-                    (String) params.get("filter"),
-                    (String) params.get("extent"));
+                    maxResults,
+                    params.get("filter"),
+                    params.get("extent"));
 
             r.setData(sres, true);
             r.count = sres.size();

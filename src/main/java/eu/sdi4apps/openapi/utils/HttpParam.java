@@ -17,9 +17,9 @@ import org.apache.commons.lang.StringUtils;
  */
 public class HttpParam {
 
-    public static Map<String, Object> GetParameters(HttpServletRequest request, Map<String, Boolean> fields, Response r) {
+    public static Map<String, String> GetParameters(HttpServletRequest request, Map<String, Boolean> fields, Response r) {
 
-        Map<String, Object> m = new LinkedHashMap<String, Object>();
+        Map<String, String> m = new LinkedHashMap<String, String>();
 
         for (Map.Entry<String, Boolean> e : fields.entrySet()) {
             String key = e.getKey();

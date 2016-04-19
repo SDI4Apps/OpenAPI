@@ -100,6 +100,26 @@ public class Settings {
             }
         }
     }
+    
+    /**
+     * Default number of results to return from a search
+     */
+    public static int NUMRESULTS = 25;
+    
+    /**
+     * Default boost to apply to terms in title (at index time)
+     */
+    public static final float TITLEBOOST = (float) 1.3;
+    
+    /**
+     * Default boost to apply to terms in description (at index time)
+     */
+    public static final float DESCRIPTIONBOOST = (float) 1.2;
+    
+    /**
+     * Default boost to apply to matches within bounding box (at query time)
+     */
+    public static final float SPATIALBOOST = (float) 3;
 
     /**
      * A flag to indicate whether the configuration file has been read properly
