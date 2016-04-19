@@ -23,7 +23,6 @@ public class BackgroundJobManager implements ServletContextListener {
 
     @Override
     public void contextInitialized(ServletContextEvent event) {
-
         scheduler = Executors.newSingleThreadScheduledExecutor();
         scheduler.scheduleAtFixedRate(new CheckIndexQueueJob(), 0, 10, TimeUnit.SECONDS);
         System.out.println("Started background job manager");

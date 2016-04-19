@@ -5,16 +5,11 @@
  */
 package eu.sdi4apps.ftgeosearch;
 
-import eu.sdi4apps.ftgeosearch.drivers.OGRDriver;
+import eu.sdi4apps.openapi.utils.Logger;
 import eu.sdi4apps.ftgeosearch.drivers.ShapefileDriver;
-import java.util.LinkedHashMap;
-import java.util.List;
+import java.io.File;
 import org.apache.lucene.index.IndexWriter;
 import org.gdal.ogr.DataSource;
-import org.gdal.ogr.Feature;
-import org.gdal.ogr.FeatureDefn;
-import org.gdal.ogr.FieldDefn;
-import org.gdal.ogr.Geometry;
 import org.gdal.ogr.Layer;
 import org.gdal.ogr.ogr;
 import org.joda.time.DateTime;
@@ -30,8 +25,17 @@ public class CheckIndexQueueJob implements Runnable {
 
     private DateTime StartTime = DateTime.now();
 
+    private Boolean IsWorking = false;
+
     @Override
     public void run() {
+
+        if (IsWorking == true) {
+            Logger.Log("Previous indexing job still in progress");
+            return;
+        }
+
+        IsWorking = true;
 
         try {
 
@@ -44,36 +48,53 @@ public class CheckIndexQueueJob implements Runnable {
 
             for (QueueItem qi : IndexerQueue.top(1)) {
 
-                qi.updateIndexingStatus(IndexingStatus.Indexing);
-
+                Logger.Log("Processing entry: " + qi.layer + " added " + qi.enqueued);
+                
                 IndexWriter w = Indexer.getWriter();
 
                 switch (qi.datasettype) {
                     case Shapefile:
                         ShapefileDriver drv = (ShapefileDriver) qi.ogrdriver;
-                        DataSource ds = ogr.Open(((ShapefileDriver) drv).filenameOfShpFile);
-                        if (ds != null) {
-                            Layer lyr = ds.GetLayer(0);
-                            if (lyr == null) {
-                                Logger.Log("No layer derived from source");
-                                return;
-                            }
-                            Indexer.indexLayer(lyr, qi, w);
+                        if (drv == null) {
+                            throw new Exception("Could not deserialize queue item into ogr driver: " + qi.ogrdriver);
                         }
+                        File f = new File(drv.filenameOfShpFile);
+
+                        if (!f.exists()) {
+                            throw new Exception("Enqueued source file '" + drv.filenameOfShpFile + "' does not exist");
+                        }
+
+                        if (!f.canRead()) {
+                            throw new Exception("No file read access to '" + drv.filenameOfShpFile + "'");
+                        }
+
+                        DataSource ds = ogr.Open(drv.filenameOfShpFile, 0);
+                        if (ds == null) {
+                            throw new Exception("Could not open data source'" + drv.filenameOfShpFile + "' using gdal/ogr");
+                        }
+
+                        Layer lyr = ds.GetLayer(0);
+                        if (lyr == null) {
+                            throw new Exception("Could not get layer from source file '" + drv.filenameOfShpFile + "' using gdal/ogr");
+                        }
+
+                        Indexer.indexLayer(lyr, qi, w);
+
                         break;
                     default:
+                        Logger.Log("Something went wrong");
                         drv = null;
                         break;
                 }
 
-                Indexer.closeWriter();
-
                 qi.updateIndexingStatus(IndexingStatus.Indexed);
-                Logger.Log("Processing entry: " + qi.layer + " added " + qi.enqueued);
             }
 
         } catch (Exception e) {
-            Logger.Log(e.toString());
+            Logger.Log("An indexing error occurred: " + e.toString());
+        } finally {
+            Indexer.closeWriter();
+            IsWorking = false;
         }
 
     }

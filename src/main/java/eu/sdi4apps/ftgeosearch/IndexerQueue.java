@@ -5,6 +5,7 @@
  */
 package eu.sdi4apps.ftgeosearch;
 
+import eu.sdi4apps.openapi.utils.Logger;
 import com.cedarsoftware.util.io.JsonReader;
 import eu.sdi4apps.ftgeosearch.drivers.ShapefileDriver;
 import eu.sdi4apps.openapi.config.Settings;
@@ -15,10 +16,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import static java.sql.Types.NULL;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import org.joda.time.DateTime;
 
@@ -34,7 +33,7 @@ public class IndexerQueue {
     private static Connection Conn;
 
     /**
-     * create Derby database
+     * create queue table if it doesn't already exist
      */
     public static void create() {
 
@@ -43,12 +42,14 @@ public class IndexerQueue {
         String sqlString = "CREATE TABLE IF NOT EXISTS queue ("
                 + " id SERIAL NOT NULL PRIMARY KEY,"
                 + " layer VARCHAR(200) NOT NULL,"
+                + " objtype VARCHAR(200) NOT NULL,"
                 + " titlefields VARCHAR(50)[] NOT NULL,"
                 + " titleformat VARCHAR(200) NOT NULL,"
                 + " descriptionfields VARCHAR(50)[] NOT NULL,"
                 + " descriptionformat VARCHAR(200) NOT NULL,"
                 + " additionalfields VARCHAR(50)[] NULL,"
                 + " jsondatafields VARCHAR(50)[] NULL,"
+                + " srs INTEGER NOT NULL DEFAULT 4326,"
                 + " enqueued TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,"
                 + " indexed TIMESTAMP,"
                 + " refresh INTEGER NOT NULL DEFAULT 1,"
@@ -133,7 +134,7 @@ public class IndexerQueue {
         try {
             if (IndexerQueue.Conn == null) {
                 IndexerQueue.Conn = DriverManager.getConnection(Settings.INDEXDB.getJdbcUrl());
-                System.out.println("Initialized queue database connection");
+                Logger.Log("Initialized queue database connection");
             }
         } catch (SQLException ex) {
             Logger.Log(ex.toString());
@@ -194,6 +195,8 @@ public class IndexerQueue {
                 QueueItem qi = new QueueItem();
                 qi.id = r.getInt("id");
                 qi.layer = r.getString("layer");
+                qi.srs = r.getInt("srs");
+                qi.objtype = r.getString("objtype");
                 qi.datasettype = DatasetType.valueOf(r.getString("datasettype"));
                 qi.status = IndexingStatus.valueOf(r.getString("indexingstatus"));
                 qi.enqueued = new DateTime(r.getTimestamp("enqueued"));
@@ -212,7 +215,7 @@ public class IndexerQueue {
                     qi.additionalfields = Arrays.asList((String[]) r.getArray("additionalfields").getArray());
                 }
                 if (r.getArray("jsondatafields") != null) {
-                    qi.jsonDataFields = Arrays.asList((String[]) r.getArray("jsondatafields").getArray());
+                    qi.jsondatafields = Arrays.asList((String[]) r.getArray("jsondatafields").getArray());
                 }
                 l.add(qi);
             }

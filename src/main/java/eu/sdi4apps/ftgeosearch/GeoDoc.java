@@ -33,6 +33,11 @@ public class GeoDoc {
      * The layer that the document belongs to
      */
     public String Layer;
+    
+    /**
+     * The type of object represented by the document
+     */
+    public String ObjType;
 
     /**
      * Full WKT geometry
@@ -97,6 +102,7 @@ public class GeoDoc {
     public static GeoDoc create(
             String id,
             String layer,
+            String objType,
             String fullGeom,
             String pointGeom,
             String title,
@@ -108,6 +114,7 @@ public class GeoDoc {
         GeoDoc gd = new GeoDoc();
         gd.Id = id;
         gd.Layer = layer;
+        gd.ObjType = objType;
         gd.FullGeom = fullGeom;
         gd.PointGeom = pointGeom;
         gd.DisplayTitle = title;
@@ -144,12 +151,20 @@ public class GeoDoc {
             d = new Document();
             d.add(new Field("Id", this.Id, Store.YES, Index.NOT_ANALYZED));
             d.add(new Field("Layer", this.Layer, Store.YES, Index.NOT_ANALYZED));
+            d.add(new Field("ObjType", this.ObjType, Store.YES, Index.NOT_ANALYZED));
             d.add(new Field("FullGeom", this.FullGeom, Store.YES, Index.NO));
             d.add(new Field("PointGeom", this.PointGeom, Store.YES, Index.NO));
             d.add(new Field("DisplayTitle", this.DisplayTitle, Store.YES, Index.NO));
             d.add(new Field("DisplayDescription", this.DisplayDescription, Store.YES, Index.NO));
-            d.add(new Field("IndexTitle", this.IndexTitle, Store.NO, Index.ANALYZED));
-            d.add(new Field("IndexDescription", this.IndexDescription, Store.NO, Index.ANALYZED));
+            
+            Field indexTitle = new Field("IndexTitle", this.IndexTitle, Store.NO, Index.ANALYZED);
+            indexTitle.setBoost((float)1.2);
+            d.add(indexTitle);
+            
+            Field indexDescription = new Field("IndexDescription", this.IndexDescription, Store.NO, Index.ANALYZED);
+            indexDescription.setBoost((float)1.1);
+            d.add(indexDescription);
+
             d.add(new Field("IndexAdditional", this.IndexAdditional, Store.NO, Index.ANALYZED));
             d.add(new Field("JsonData", Serializer.Serialize(this.JsonData), Store.YES, Index.NO));
         } catch (Exception e) {

@@ -2,7 +2,10 @@ package eu.sdi4apps.openapi.types;
 
 import com.google.gson.Gson;
 import eu.sdi4apps.openapi.exceptions.GeneralException;
+import eu.sdi4apps.openapi.utils.Logger;
 import java.io.IOException;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.math.NumberUtils;
 
 public class BBox {
 
@@ -149,6 +152,36 @@ public class BBox {
             bbox.maxX = lon1;
             bbox.minX = lon2;
         }
+
+        return bbox.normalize();
+
+    }
+
+    public static BBox createFromString(String extent) {
+
+        if (extent == null) {
+            return null;
+        }
+
+        String[] stringParts = StringUtils.split(extent, ",");
+        if (stringParts.length != 4) {
+            return null;
+        }
+
+        Double[] doubleParts = new Double[4];
+
+        int i = 0;
+        for (String s : stringParts) {
+            doubleParts[i] = NumberUtils.toDouble(s);
+            i++;
+        }
+
+        BBox bbox = new BBox();
+
+        bbox.minX = doubleParts[0];
+        bbox.minY = doubleParts[1];
+        bbox.maxX = doubleParts[2];
+        bbox.maxY = doubleParts[3];
 
         return bbox.normalize();
 
