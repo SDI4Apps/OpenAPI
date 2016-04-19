@@ -5,6 +5,7 @@
  */
 package eu.sdi4apps.ftgeosearch;
 
+import eu.sdi4apps.openapi.config.Settings;
 import java.util.UUID;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
@@ -17,13 +18,12 @@ import org.apache.lucene.document.Field.Store;
  * @author runarbe
  */
 public class GeoDoc {
-    
+
     /**
-     * The relevance score of the search result
-     * Only populated upon searches
+     * The relevance score of the search result Only populated upon searches
      */
     public float Score;
-    
+
     /**
      * Unique id of document
      */
@@ -33,7 +33,7 @@ public class GeoDoc {
      * The layer that the document belongs to
      */
     public String Layer;
-    
+
     /**
      * The type of object represented by the document
      */
@@ -88,6 +88,7 @@ public class GeoDoc {
 
     /**
      * Create a new GeoDoc
+     *
      * @param layer
      * @param fullGeom
      * @param pointGeom
@@ -129,9 +130,9 @@ public class GeoDoc {
     }
 
     /**
-     * Add additional values to be indexed but  not displayed to the document
-     * 
-     * @param values 
+     * Add additional values to be indexed but not displayed to the document
+     *
+     * @param values
      */
     public void indexValues(String values) {
         this.IndexAdditional += values;
@@ -139,7 +140,8 @@ public class GeoDoc {
 
     /**
      * Add custom JSON data object to the document
-     * @param jsonData 
+     *
+     * @param jsonData
      */
     public void setJsonData(String jsonData) {
         this.JsonData = jsonData;
@@ -156,17 +158,19 @@ public class GeoDoc {
             d.add(new Field("PointGeom", this.PointGeom, Store.YES, Index.NO));
             d.add(new Field("DisplayTitle", this.DisplayTitle, Store.YES, Index.NO));
             d.add(new Field("DisplayDescription", this.DisplayDescription, Store.YES, Index.NO));
-            
+
             Field indexTitle = new Field("IndexTitle", this.IndexTitle, Store.NO, Index.ANALYZED);
-            indexTitle.setBoost((float)1.2);
+            indexTitle.setBoost(Settings.TITLEBOOST);
             d.add(indexTitle);
-            
+
             Field indexDescription = new Field("IndexDescription", this.IndexDescription, Store.NO, Index.ANALYZED);
-            indexDescription.setBoost((float)1.1);
+            indexDescription.setBoost(Settings.DESCRIPTIONBOOST);
             d.add(indexDescription);
 
             d.add(new Field("IndexAdditional", this.IndexAdditional, Store.NO, Index.ANALYZED));
-            d.add(new Field("JsonData", Serializer.Serialize(this.JsonData), Store.YES, Index.NO));
+            if (this.JsonData != null) {
+                d.add(new Field("JsonData", Serializer.Serialize(this.JsonData), Store.YES, Index.NO));
+            }
         } catch (Exception e) {
             System.out.println("Error converting GeoDoc to LuceneDoc: " + e.toString());
         }

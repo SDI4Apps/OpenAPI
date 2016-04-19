@@ -17,7 +17,6 @@ import eu.sdi4apps.openapi.utils.Cors;
 import eu.sdi4apps.openapi.utils.HttpParam;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.nio.file.Paths;
 import static java.util.Arrays.asList;
 import java.util.HashMap;
 import java.util.List;
@@ -81,7 +80,7 @@ public class Index extends HttpServlet {
                     List<String> descFields3 = asList("field_4", "field_8", "field_18");
                     String descFieldFormat3 = "Alternative forms: %s. Type of name %s in %s";
                     QueueItem entry3 = QueueItem.create("Geonames 1000", "names", DatasetType.Shapefile, drv3, titleFields3, titleFieldFormat3, descFields3, descFieldFormat3, null, null, 4326);
-                    IndexerQueue.enqueue(entry3); 
+                    IndexerQueue.enqueue(entry3);
                     r.setData("Added two layers to index", true);
                     break;
                 case "EnqueueShapefile":
@@ -93,10 +92,7 @@ public class Index extends HttpServlet {
                     reqFields.put("descriptionFormat", true);
                     reqFields.put("additionalFields", true);
                     reqFields.put("jsonDataFields", true);
-
-                    Map<String, Object> avFields = HttpParam.GetParameters(request, reqFields, r);
-
-                    Logger.Log(avFields.toString());
+                    Map<String, String> avFields = HttpParam.GetParameters(request, reqFields, r);
                     break;
                 default:
                     r.setError("Unsupported action: " + action);

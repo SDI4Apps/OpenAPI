@@ -1,19 +1,24 @@
 package eu.sdi4apps.ftgeosearch;
 
+import com.spatial4j.core.context.SpatialContext;
+import com.spatial4j.core.shape.Shape;
 import eu.sdi4apps.openapi.utils.Logger;
-import eu.sdi4apps.ftgeosearch.drivers.ShapefileDriver;
 import eu.sdi4apps.openapi.config.Settings;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.SQLException;
-import static java.util.Arrays.asList;
 import java.util.LinkedHashMap;
-import java.util.List;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.spatial.SpatialStrategy;
+import org.apache.lucene.spatial.prefix.RecursivePrefixTreeStrategy;
+import org.apache.lucene.spatial.prefix.tree.GeohashPrefixTree;
+import org.apache.lucene.spatial.prefix.tree.SpatialPrefixTree;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.gdal.ogr.Feature;
@@ -35,6 +40,16 @@ public class Indexer {
 
     public static IndexWriterConfig indexWriterConfig = null;
 
+    public static SpatialContext spatialCtx = null;
+
+    public static SpatialStrategy spatialStrategy = null;
+
+    public static SpatialPrefixTree spatialPrefixTree = null;
+
+    public static int maxSpatialIndexLevels = 11;
+
+    public static int errorCount = 0;
+
     /**
      * Get the IndexWriter or null
      *
@@ -43,6 +58,12 @@ public class Indexer {
     public static IndexWriter getWriter() {
         try {
             if (indexWriter == null || indexWriter.isOpen() == false) {
+                spatialCtx = SpatialContext.GEO;
+
+                spatialPrefixTree = new GeohashPrefixTree(spatialCtx, maxSpatialIndexLevels);
+
+                spatialStrategy = new RecursivePrefixTreeStrategy(spatialPrefixTree, "GeoField");
+
                 analyzer = new StandardAnalyzer();
                 directory = FSDirectory.open(Paths.get(Settings.INDEXDIR));
                 indexWriterConfig = new IndexWriterConfig(analyzer);
@@ -79,14 +100,16 @@ public class Indexer {
 
     /**
      * Index a layer
-     * 
+     *
      * @param lyr
      * @param qi
-     * @param w 
+     * @param w
      */
     public static void indexLayer(Layer lyr, QueueItem qi, IndexWriter w) {
 
         try {
+
+            Indexer.errorCount = 0;
 
             qi.updateIndexingStatus(IndexingStatus.Indexing);
 
@@ -106,6 +129,10 @@ public class Indexer {
             while (null != (f = lyr.GetNextFeature())) {
 
                 indexFeature(w, qi, f, titleFieldMap, descriptionFieldMap, indexAdditionalFieldMap, jsonDataFieldMap);
+
+                if (Indexer.errorCount >= 50) {
+                    throw new Exception("More than 50 errors occurred, aborting indexing operation");
+                }
 
                 if (counter % batch == 0 || counter == totalFeatures) {
                     Logger.Log("Processed: " + counter + " items...");
@@ -146,12 +173,17 @@ public class Indexer {
 
             String compositeId = qi.layer + "-" + f.GetFID();
 
+            String pointWkt = g.PointOnSurface().ExportToWkt();
+
+            double[] shapeEnvelope = new double[4];
+            g.GetEnvelope(shapeEnvelope);
+
             GeoDoc gd = GeoDoc.create(
                     compositeId,
                     qi.layer,
                     qi.objtype,
                     g.ExportToWkt(),
-                    g.PointOnSurface().ExportToWkt(),
+                    pointWkt,
                     titleData[0],
                     descData[0],
                     titleData[1],
@@ -160,12 +192,35 @@ public class Indexer {
                     jsonData);
 
             if (gd != null) {
-                w.updateDocument(new Term("Id", compositeId), gd.asLuceneDoc());
+                
+                /**
+                 * Retrieve Lucene document
+                 */
+                Document luceneGeoDoc = gd.asLuceneDoc();
+
+                /**
+                 * Add spatial indexing for bounding box of objects
+                 */
+                for (IndexableField geoField
+                        : spatialStrategy.createIndexableFields(
+                                spatialCtx.makeRectangle(shapeEnvelope[0],
+                                        shapeEnvelope[1],
+                                        shapeEnvelope[2],
+                                        shapeEnvelope[3]))) {
+                    luceneGeoDoc.add(geoField);
+                }
+
+                /**
+                 * Write the document to the index
+                 */
+                w.updateDocument(new Term("Id", compositeId), luceneGeoDoc);
             }
 
         } catch (Exception e) {
-            Logger.Log("An error occurred while writing feature to Lucene index: " + e.toString());
+            Indexer.errorCount++;
+            Logger.Log("An error occurred while writing feature to Lucene index: " + e.toString() + " (#" + Indexer.errorCount + ")");
         }
+
     }
 
     /**

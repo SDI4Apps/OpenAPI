@@ -5,6 +5,12 @@
  */
 package eu.sdi4apps.ftgeosearch;
 
+import com.spatial4j.core.context.SpatialContext;
+import com.spatial4j.core.distance.DistanceUtils;
+import static eu.sdi4apps.ftgeosearch.Indexer.maxSpatialIndexLevels;
+import static eu.sdi4apps.ftgeosearch.Indexer.spatialCtx;
+import static eu.sdi4apps.ftgeosearch.Indexer.spatialPrefixTree;
+import static eu.sdi4apps.ftgeosearch.Indexer.spatialStrategy;
 import eu.sdi4apps.openapi.config.Settings;
 import eu.sdi4apps.openapi.types.BBox;
 import eu.sdi4apps.openapi.utils.Logger;
@@ -12,20 +18,27 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
 import org.apache.commons.lang.StringUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
-import org.apache.lucene.queries.TermFilter;
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
+import org.apache.lucene.search.BooleanClause;
+import org.apache.lucene.search.BooleanClause.Occur;
+import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
+import org.apache.lucene.spatial.SpatialStrategy;
+import org.apache.lucene.spatial.prefix.RecursivePrefixTreeStrategy;
+import org.apache.lucene.spatial.prefix.tree.GeohashPrefixTree;
+import org.apache.lucene.spatial.prefix.tree.SpatialPrefixTree;
+import org.apache.lucene.spatial.query.SpatialArgs;
+import org.apache.lucene.spatial.query.SpatialOperation;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 
@@ -43,12 +56,24 @@ public class Searcher {
 
     public static IndexSearcher isearcher = null;
 
+    public static SpatialContext spatialCtx = null;
+
+    public static SpatialStrategy spatialStrategy = null;
+
+    public static SpatialPrefixTree spatialPrefixTree = null;
+
+    public static int maxSpatialIndexLevels = 11;
+
     static {
         createSearcher();
     }
 
     public static IndexSearcher createSearcher() {
         try {
+            spatialCtx = SpatialContext.GEO;
+            spatialPrefixTree = new GeohashPrefixTree(spatialCtx, maxSpatialIndexLevels);
+            spatialStrategy = new RecursivePrefixTreeStrategy(spatialPrefixTree, "GeoField");
+
             analyzer = new StandardAnalyzer();
             directory = FSDirectory.open(Paths.get(Settings.INDEXDIR));
             ireader = DirectoryReader.open(directory);
@@ -84,15 +109,27 @@ public class Searcher {
             String filter,
             String extent) throws IOException, ParseException {
 
-        List<Object> sr = new ArrayList<>();
+        List<Object> searchResults = new ArrayList<>();
 
         try {
+
+            /**
+             * Create searcher if it does not exist
+             */
+            if (isearcher == null) {
+                createSearcher();
+            }
+
+            /**
+             * Create a boolean query
+             */
+            BooleanQuery combinedQuery = new BooleanQuery();
 
             /**
              * Set default number of results to 100
              */
             if (maxresults == null) {
-                maxresults = 100;
+                maxresults = Settings.NUMRESULTS;
             }
 
             /**
@@ -106,23 +143,27 @@ public class Searcher {
             }
 
             /**
+             * Create query clause for user specified term(s)
+             */
+            QueryParser parser = new MultiFieldQueryParser(new String[]{"IndexTitle", "IndexDescription", "IndexAdditional"}, analyzer);
+            Query termQuery = parser.parse(q);
+            combinedQuery.add(termQuery, Occur.MUST);
+            
+            /**
              * Convert string extent to BBox object
              */
             if (extent != null) {
                 BBox bbox = BBox.createFromString(extent);
                 if (bbox != null) {
-                    Logger.Log(bbox.jsArray());
+                    SpatialArgs args = new SpatialArgs(SpatialOperation.Intersects,
+                            spatialCtx.makeRectangle(bbox.minX, bbox.maxX, bbox.minY, bbox.maxY));
+                    Query spatialQuery = spatialStrategy.makeQuery(args);
+                    spatialQuery.setBoost(Settings.SPATIALBOOST);
+                    combinedQuery.add(spatialQuery, Occur.SHOULD);
                 }
             }
 
-            if (isearcher == null) {
-                createSearcher();
-            }
-
-            QueryParser parser = new MultiFieldQueryParser(new String[]{"IndexTitle", "IndexDescription", "IndexAdditional"}, analyzer);
-            Query query = parser.parse(q);
-
-            ScoreDoc[] hits = isearcher.search(query, null, maxresults).scoreDocs;
+            ScoreDoc[] hits = isearcher.search(combinedQuery, maxresults).scoreDocs;
 
             // Iterate through the results:
             for (int i = 0; i < hits.length; i++) {
@@ -137,14 +178,14 @@ public class Searcher {
                 g.DisplayDescription = hitDoc.get("DisplayDescription");
                 g.PointGeom = hitDoc.get("PointGeom");
                 g.JsonData = Serializer.Deserialize(hitDoc.get("JsonData"));
-                sr.add(g);
+                searchResults.add(g);
             }
 
         } catch (Exception e) {
             Logger.Log("An exception occurred during search: " + e.toString());
         } finally {
             destroySearcher();
-            return sr;
+            return searchResults;
         }
 
     }

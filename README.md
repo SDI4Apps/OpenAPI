@@ -4,16 +4,8 @@ The SDI4Apps OpenAPI is a set of web services exposed by the SDI4Apps Cloud plat
 
 The Open API consists partly of the protocols exposed by the components in the platform, i.e. Open Geospatial Consortium compliant web services like WMS, WFS and CS-W. Other parts of the API implements custom functionality that adds specific search/processing capabilities to the system. The code of these custom services are included in this repository.
 
-## System requirements
-* Java SDK
-* Maven
-* Apache Tomcat
-* GDAL/OGR Java SWIG bindings
-* Apache Lucene
-* PostgreSQL
-* PostGIS
-* pgRouting
+The code base of the project has been ported to this repository in the last week based on the content of two independent previous repositories where the actual development has taken place.
 
-## Installation
+# Web Service documentation
 
-Installation will be handled by the platform installation script...
+Documentation is currently being added to the site based on auto-generated JavaDocs from the source code. Please refer to the GitHub wiki for usage instructions.
