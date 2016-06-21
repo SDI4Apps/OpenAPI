@@ -5,6 +5,7 @@
  */
 package eu.sdi4apps.ftgeosearch;
 
+import eu.sdi4apps.openapi.utils.Logger;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -23,14 +24,14 @@ public class BackgroundJobManager implements ServletContextListener {
 
     @Override
     public void contextInitialized(ServletContextEvent event) {
-        scheduler = Executors.newSingleThreadScheduledExecutor();
-        scheduler.scheduleAtFixedRate(new CheckIndexQueueJob(), 0, 10, TimeUnit.SECONDS);
-        System.out.println("Started background job manager");
+//        scheduler = Executors.newSingleThreadScheduledExecutor();
+//        scheduler.scheduleAtFixedRate(new CheckIndexQueueJob(), 0, 10, TimeUnit.SECONDS);
+//        System.out.println(Logger.getCurrentTimeStamp() + " - Started background job manager");
     }
 
     @Override
     public void contextDestroyed(ServletContextEvent event) {
-        scheduler.shutdownNow();
-        System.out.println("Shut down background job manager");
+//        scheduler.shutdownNow();
+//        System.out.println("Shut down background job manager");
     }
 }

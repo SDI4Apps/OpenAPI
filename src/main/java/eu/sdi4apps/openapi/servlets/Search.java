@@ -4,7 +4,7 @@ import eu.sdi4apps.ftgeosearch.SearchResult;
 import eu.sdi4apps.ftgeosearch.Searcher;
 import eu.sdi4apps.openapi.types.DataResponse;
 import eu.sdi4apps.openapi.utils.Cors;
-import eu.sdi4apps.openapi.utils.HttpParam;
+import eu.sdi4apps.openapi.utils.RequestUtils;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.LinkedHashMap;
@@ -17,6 +17,7 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.NumberUtils;
 import org.apache.lucene.queryparser.classic.ParseException;
 
@@ -55,7 +56,7 @@ public class Search extends HttpServlet {
             m.put("maxresults", false);
             m.put("extent", false);
 
-            Map<String, String> params = HttpParam.GetParameters(request, m, r);
+            Map<String, String> params = RequestUtils.GetParams(request, m, r);
             if (r.status == "error") {
                 out.println(r.asJson());
                 return;
@@ -71,7 +72,7 @@ public class Search extends HttpServlet {
             List<Object> sres = Searcher.Search((String) params.get("q"),
                     maxResults,
                     params.get("filter"),
-                    params.get("extent"));
+                    StringUtils.join(request.getParameterValues("extent[]"), ","));
 
             r.setData(sres, true);
             r.count = sres.size();

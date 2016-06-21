@@ -7,7 +7,7 @@ package eu.sdi4apps.ftgeosearch;
 
 import eu.sdi4apps.openapi.utils.Logger;
 import com.cedarsoftware.util.io.JsonReader;
-import eu.sdi4apps.ftgeosearch.drivers.ShapefileDriver;
+import eu.sdi4apps.indexer.drivers.ShapefileDriver;
 import eu.sdi4apps.openapi.config.Settings;
 import java.sql.Array;
 import java.sql.Connection;
@@ -60,11 +60,15 @@ public class IndexerQueue {
 
         try {
             Statement s = Conn.createStatement();
-            s.executeUpdate(sqlString);
-            System.out.println("Successfully created queue database");
+            int n = s.executeUpdate(sqlString);
+            if (n == 1) {
+                Logger.Log("Indexer queue table did not exist and has been created");
+            } else {
+                //Logger.Log("Indexer queue table already exists");
+            }
             s.close();
         } catch (SQLException ex) {
-            System.out.println(ex.toString());
+            Logger.Log("An error occurred during creation of indexer queue table: " + ex.toString());
         }
 
     }
@@ -75,14 +79,14 @@ public class IndexerQueue {
             s = Conn.createStatement();
             return s.executeQuery(sql);
         } catch (Exception e) {
-            System.out.println(e.toString());
+            Logger.Log("An error occurred during executeQuery operation: " + e.toString());
             return null;
         } finally {
             if (s != null) {
                 try {
                     s.close();
                 } catch (SQLException ex) {
-                    System.out.println(ex.toString());
+                    Logger.Log("Could not close SQL statement: " + ex.toString());
                 }
             }
         }
@@ -96,27 +100,16 @@ public class IndexerQueue {
             s.executeUpdate(sql);
             s.close();
         } catch (Exception e) {
-            System.out.println(e.toString());
+            Logger.Log("An error occurred during executeUpdate operation: " + e.toString());
         } finally {
             try {
                 if (s != null) {
                     s.close();
                 }
             } catch (SQLException ex) {
-                System.out.println(ex.toString());
+                Logger.Log("Could not close SQL statement: " + ex.toString());
             }
         }
-    }
-
-    /**
-     * create Derby database
-     */
-    public static void drop() {
-
-        IndexerQueue.init();
-        String sql = "DROP TABLE queue";
-        IndexerQueue.executeUpdate(sql);
-
     }
 
     /**
@@ -199,7 +192,7 @@ public class IndexerQueue {
                 qi.objtype = r.getString("objtype");
                 qi.datasettype = DatasetType.valueOf(r.getString("datasettype"));
                 qi.status = IndexingStatus.valueOf(r.getString("indexingstatus"));
-                qi.enqueued = new DateTime(r.getTimestamp("enqueued"));
+                qi.enqueued = r.getTimestamp("enqueued").toString();
                 switch (qi.datasettype) {
                     case Shapefile:
                         qi.ogrdriver = (ShapefileDriver) JsonReader.jsonToJava(r.getString("ogrdriver"));

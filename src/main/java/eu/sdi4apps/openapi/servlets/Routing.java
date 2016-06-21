@@ -5,12 +5,11 @@ package eu.sdi4apps.openapi.servlets;
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-import eu.sdi4apps.openapi.exceptions.UnsupportedAction;
-import eu.sdi4apps.pgrouting.types.NodeResponse;
-import eu.sdi4apps.pgrouting.types.RoutingOperations;
+import eu.sdi4apps.routing.types.NodeResponse;
+import eu.sdi4apps.routing.types.RoutingOperations;
 import eu.sdi4apps.openapi.types.Response;
-import eu.sdi4apps.pgrouting.types.RouteResponse;
 import eu.sdi4apps.openapi.utils.Cors;
+import eu.sdi4apps.routing.RouteCalculator;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.SQLException;
@@ -26,7 +25,7 @@ import javax.servlet.http.HttpServletResponse;
  *
  * @author runarbe
  */
-@WebServlet(name = "Routing", urlPatterns = {"/Routing"})
+@WebServlet(name = "routing", urlPatterns = {"/routing"})
 public class Routing extends HttpServlet {
 
     /**
@@ -40,33 +39,44 @@ public class Routing extends HttpServlet {
      */
     protected void processRequest(HttpServletRequest hReq, HttpServletResponse hResp)
             throws ServletException, IOException, SQLException, ClassNotFoundException {
-        hResp.setContentType("application/json;charset=UTF-8");
+
         hResp = Cors.EnableCors(hResp);
 
         PrintWriter out = hResp.getWriter();
+
+        Response r = Response.Error(null);
 
         try {
 
             String action = hReq.getParameter("action");
 
-            if (action.equals(RoutingOperations.GetNearestNode)) {
-                double lat = Double.parseDouble(hReq.getParameter("lat"));
-                double lon = Double.parseDouble(hReq.getParameter("lon"));
-                int radius = Integer.parseInt(hReq.getParameter("radius"));
-                NodeResponse mResponse = NodeResponse.GetByLonLat(lon, lat, radius);
-                out.println(mResponse.asJson());
-            } else if (action.equals(RoutingOperations.GetShortestPath)) {
-                int from = Integer.parseInt(hReq.getParameter("from"));
-                int to = Integer.parseInt(hReq.getParameter("to"));
-                RouteResponse mResponse = RouteResponse.GetDijkstra(from, to);
-                out.println(mResponse.asJson());
-            } else {
-                throw new UnsupportedAction(action);
+            switch (action) {
+                case RoutingOperations.NEARESTNODE:
+                    double lat = Double.parseDouble(hReq.getParameter("lat"));
+                    double lon = Double.parseDouble(hReq.getParameter("lon"));
+                    int radius = Integer.parseInt(hReq.getParameter("radius"));
+                    r = RouteCalculator.GetNodeByLonLat(lon, lat, radius);
+                    break;
+                case RoutingOperations.SHORTESTPATH:
+                    int from = Integer.parseInt(hReq.getParameter("from"));
+                    int to = Integer.parseInt(hReq.getParameter("to"));
+                    r = RouteCalculator.GetShortestRoute(from, to);
+                    break;
+                case RoutingOperations.OPTIMALROUTE:
+                    r = RouteCalculator.GetOptimalRoute(hReq);
+                    break;
+                case RoutingOperations.REACHABLEAREA:
+                    r = RouteCalculator.GetReachableArea(hReq);
+                    break;
+                default:
+                    r.unsupportedAction(action);
+                    break;
             }
-
         } catch (Exception e) {
-            Response mResponse = Response.Error(e.toString());
-            out.println(mResponse.asJson());
+            r.addMessage(e.toString());
+        } finally {
+            out.println(r.asJson());
+            out.close();
         }
 
     }

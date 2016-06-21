@@ -1,4 +1,4 @@
-package eu.sdi4apps.pgrouting.types;
+package eu.sdi4apps.routing.types;
 
 /**
  * Node class

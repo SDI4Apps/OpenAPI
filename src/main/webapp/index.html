@@ -5,19 +5,19 @@
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     </head>
     <body>
-        <h1>Feature search: Open API test suite</h1>
+        <h1>SDI4Apps OpenAPI Custom Web Services</h1>
+        <h2>Indexing and search tests</h2>
         <ul>
             <li><a href="search?q=Os*" target="_blank">Search for 'os*'</a></li>
-            <li><a href="index?action=CreateIndex" target="_blank">Erase and restart the index</a></li>
-            <li><a href="index?action=UnlockIndex" target="_blank">Unlock index</a></li>
-            <li><a href="index?action=EnqueueItemTest" target="_blank">Enqueue test file for indexing</a></li>
-            <li><a href="index?action=EnqueueShapefile?shapefileName=a&titleFields=name,type&titleFormat=%s - %s&descriptionFields=type&descriptionFormat=%s" target="_blank">Enqueue dynamic Shapefile for indexing</a></li>
+<!--            <li><a href="index?action=CreateIndex" target="_blank">Erase and restart the index</a></li>
+            <li><a href="index?action=UnlockIndex" target="_blank">Unlock index</a></li>-->
+            <li><a href="index?action=EnqueueItemTest" target="_blank">Enqueue three test files for indexing</a></li>
+            <!--<li><a href="index?action=EnqueueShapefile?shapefileName=a&titleFields=name,type&titleFormat=%s - %s&descriptionFields=type&descriptionFormat=%s" target="_blank">Enqueue dynamic Shapefile for indexing</a></li>-->
             <li><a href="index?action=ViewQueue&maxEntries=5" target="_blank">View 5 last entries in queue</a></li>
-            <li><a href="Routing?action=GetShortestPath&from=1&to=14" target="codeDisplay" target="_blank">Find shortest path between a and b</a></li>
-            <li><a href="CustomData?action=CreateApplication&title=Runar" target="_blank">Create application Runar</a></li>
-            <li><a href="CustomData?action=DeleteApplication&id=1" target="_blank">Delete application Runar</a></li>
-            <li><a href="CustomData?action=ListApplications" target="_blank">List all applications</a></li>
         </ul>
-        <!--<iframe name="codeDisplay" style="width:1024px; height: 500px; overflow-x: hidden; overflow-y: scroll; overflow-wrap: break-word;"></iframe>-->
+        <h2>Routing tests</h2>
+        <ul>
+            <li><a href="Routing?action=GetShortestPath&from=1&to=14" target="_blank">Find shortest path between a and b</a></li>
+        </ul>
     </body>
 </html>
