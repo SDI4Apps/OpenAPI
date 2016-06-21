@@ -6,7 +6,7 @@
 package eu.sdi4apps.ftgeosearch;
 
 import eu.sdi4apps.openapi.utils.Logger;
-import eu.sdi4apps.ftgeosearch.drivers.ShapefileDriver;
+import eu.sdi4apps.indexer.drivers.ShapefileDriver;
 import java.io.File;
 import org.apache.lucene.index.IndexWriter;
 import org.gdal.ogr.DataSource;
@@ -42,6 +42,7 @@ public class CheckIndexQueueJob implements Runnable {
             DateTime currentTime = DateTime.now();
 
             int runningTime = Seconds.secondsBetween(StartTime, currentTime).getSeconds();
+            
             CheckCount++;
 
             Logger.Log("Checked index queue: #" + CheckCount + ", background indexing task has been running for " + runningTime + " seconds since last restart...");
@@ -49,7 +50,7 @@ public class CheckIndexQueueJob implements Runnable {
             for (QueueItem qi : IndexerQueue.top(1)) {
 
                 Logger.Log("Processing entry: " + qi.layer + " added " + qi.enqueued);
-                
+
                 IndexWriter w = Indexer.getWriter();
 
                 switch (qi.datasettype) {

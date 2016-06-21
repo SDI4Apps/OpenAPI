@@ -149,11 +149,14 @@ public class Searcher {
             Query termQuery = parser.parse(q);
             combinedQuery.add(termQuery, Occur.MUST);
             
+            Logger.Log(extent);
+            
             /**
              * Convert string extent to BBox object
              */
             if (extent != null) {
                 BBox bbox = BBox.createFromString(extent);
+//                Logger.Log(bbox.toString());
                 if (bbox != null) {
                     SpatialArgs args = new SpatialArgs(SpatialOperation.Intersects,
                             spatialCtx.makeRectangle(bbox.minX, bbox.maxX, bbox.minY, bbox.maxY));
@@ -161,6 +164,9 @@ public class Searcher {
                     spatialQuery.setBoost(Settings.SPATIALBOOST);
                     combinedQuery.add(spatialQuery, Occur.SHOULD);
                 }
+                
+//                Logger.Log("Using spatial boost");
+                
             }
 
             ScoreDoc[] hits = isearcher.search(combinedQuery, maxresults).scoreDocs;
@@ -184,7 +190,6 @@ public class Searcher {
         } catch (Exception e) {
             Logger.Log("An exception occurred during search: " + e.toString());
         } finally {
-            destroySearcher();
             return searchResults;
         }
 

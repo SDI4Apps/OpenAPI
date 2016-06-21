@@ -1,10 +1,10 @@
 package eu.sdi4apps.openapi.config;
 
 import eu.sdi4apps.ftgeosearch.IndexerQueue;
+import eu.sdi4apps.openapi.utils.Logger;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Properties;
 import org.apache.commons.lang.math.NumberUtils;
@@ -20,10 +20,12 @@ public class Settings {
      * Instantiate static variables
      */
     static {
-
+ 
         InputStream inputStream = null;
 
         try {
+
+            System.out.println("Start loading of properties file");
 
             Properties prop = new Properties();
             String propFileName = "openapi.properties";
@@ -63,31 +65,47 @@ public class Settings {
             // Load index directory configuration
             String indexdir = prop.getProperty("indexdir");
             INDEXDIR = indexdir;
-            Files.createDirectories(Paths.get(indexdir));            
- 
+            if (!Files.exists(Paths.get(indexdir))) {
+                Files.createDirectories(Paths.get(indexdir));
+            }
+
             // Load log directory configuration
             String logdir = prop.getProperty("logdir");
             LOGDIR = logdir;
-            Files.createDirectories(Paths.get(logdir));
-            
+            if (!Files.exists(Paths.get(logdir))) {
+                Files.createDirectories(Paths.get(logdir));
+            }
+
             // Load shape directory configuration
             String shapedir = prop.getProperty("shapedir");
             SHAPEDIR = shapedir;
-            Files.createDirectories(Paths.get(shapedir));
-            
+
+            if (!Files.exists(Paths.get(shapedir))) {
+                Files.createDirectories(Paths.get(shapedir));
+            }
+
+            System.out.println("Completed loading of properties file");
+
             // Load GDAL/OGR 
-            Class.forName("org.gdal.Loader");
-            
+//            try {
+//                Class.forName("org.gdal.Loader");
+//                Logger.Log("Successfully loaded org.gdalLoader on startup");
+//            } catch (ClassNotFoundException ex) {
+//                Logger.Log("Failed to instantiate org.gdal.Loader on startup: " + ex.toString());
+//                Logger.Log("-- gdalloader.jar should be in the shared classloader of the Tomcat instance");
+//                Logger.Log("-- It must be compiled with the same Java version as the server");
+//            }
+
             // Initialize queue database
             IndexerQueue.create();
-            
+
             // Set ready flag
-            isReady = true;
- 
+            Settings.isReady = true;
+
         } catch (Exception e) {
             // If exception occurs, print error message to std out and set isReady flag to false
-            System.out.println("Configuration not loaded: " + e);
-            isReady = false;
+            System.out.println("Configuration not loaded or not complete: " + e);
+            Settings.isReady = false;
         } finally {
             try {
                 if (inputStream != null) {
@@ -96,26 +114,26 @@ public class Settings {
             } catch (IOException ex) {
                 // If exception occurs during close of inputStream, print error message to std out and set isReady flag to false
                 System.out.println("Unable to close configuration file: " + ex.toString());
-                isReady = false;
+                Settings.isReady = false;
             }
         }
     }
-    
+
     /**
      * Default number of results to return from a search
      */
     public static int NUMRESULTS = 25;
-    
+
     /**
      * Default boost to apply to terms in title (at index time)
      */
     public static final float TITLEBOOST = (float) 1.3;
-    
+
     /**
      * Default boost to apply to terms in description (at index time)
      */
     public static final float DESCRIPTIONBOOST = (float) 1.2;
-    
+
     /**
      * Default boost to apply to matches within bounding box (at query time)
      */
@@ -124,7 +142,7 @@ public class Settings {
     /**
      * A flag to indicate whether the configuration file has been read properly
      */
-    public static Boolean isReady;
+    public static Boolean isReady = false;
 
     /**
      * Connection parameters for routing database
