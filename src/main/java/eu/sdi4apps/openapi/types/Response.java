@@ -39,6 +39,10 @@ public class Response {
         this.setError();
     }
 
+    public void optionalParam(String parameterName) {
+        this.addMessage(String.format("Optional parameter: '%s' not set", parameterName));
+    }
+
     public void unsupportedAction(String actionValue) {
         this.addMessage(String.format("Unsupported value for action parameter: '%s'", actionValue));
         this.setError();
@@ -57,7 +61,7 @@ public class Response {
     public void setError() {
         this.status = Status.error;
     }
-    
+
     public void setSuccess() {
         this.status = Status.success;
     }
@@ -78,7 +82,7 @@ public class Response {
         this.time = response.time != 0 ? response.time : this.time;
 
         this.action = response.action != null ? response.action : this.action;
-        
+
         this.status = response.status;
 
         for (String s : response.messages) {
@@ -86,7 +90,7 @@ public class Response {
         }
 
         this.parameters = null != response.parameters && "" != response.parameters ? response.parameters : this.parameters;
-                
+
         return this;
     }
 

@@ -5,6 +5,7 @@
  */
 package eu.sdi4apps.ftgeosearch;
 
+import eu.sdi4apps.openapi.utils.Logger;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
@@ -37,7 +38,6 @@ public class Serializer {
             ObjectInputStream si = new ObjectInputStream(bi);
             return si.readObject();
         } catch (Exception e) {
-            System.out.println(e);
             return null;
         }
     }

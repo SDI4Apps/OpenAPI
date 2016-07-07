@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package eu.sdi4apps.ftgeosearch.drivers;
+package eu.sdi4apps.indexer.drivers;
 
 import eu.sdi4apps.ftgeosearch.DatasetType;
 import java.io.File;

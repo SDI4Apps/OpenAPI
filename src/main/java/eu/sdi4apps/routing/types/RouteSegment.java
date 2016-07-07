@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package eu.sdi4apps.pgrouting.types;
+package eu.sdi4apps.routing.types;
 
 /**
  *

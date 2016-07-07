@@ -8,17 +8,16 @@ package eu.sdi4apps.openapi.servlets;
 import eu.sdi4apps.ftgeosearch.DatasetType;
 import eu.sdi4apps.ftgeosearch.Indexer;
 import eu.sdi4apps.ftgeosearch.IndexerQueue;
-import eu.sdi4apps.openapi.utils.Logger;
 import eu.sdi4apps.ftgeosearch.QueueItem;
-import eu.sdi4apps.ftgeosearch.drivers.ShapefileDriver;
+import eu.sdi4apps.indexer.drivers.ShapefileDriver;
 import eu.sdi4apps.openapi.config.Settings;
 import eu.sdi4apps.openapi.types.DataResponse;
+import eu.sdi4apps.openapi.types.Status;
 import eu.sdi4apps.openapi.utils.Cors;
-import eu.sdi4apps.openapi.utils.HttpParam;
+import eu.sdi4apps.openapi.utils.RequestUtils;
 import java.io.IOException;
 import java.io.PrintWriter;
 import static java.util.Arrays.asList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.servlet.ServletException;
@@ -47,11 +46,11 @@ public class Index extends HttpServlet {
         DataResponse r = new DataResponse();
         r.parameters = request.getQueryString();
         try {
-            String action = HttpParam.GetString(request, "action", "");
+            String action = RequestUtils.GetString(request, "action", "");
 
             switch (action) {
                 case "ViewQueue":
-                    int maxEntries = HttpParam.GetInt(request, "maxEntries", 10);
+                    int maxEntries = RequestUtils.GetInt(request, "maxEntries", 10);
                     r.setData(IndexerQueue.top(maxEntries), true);
                     break;
                 case "UnlockIndex":
@@ -81,18 +80,36 @@ public class Index extends HttpServlet {
                     String descFieldFormat3 = "Alternative forms: %s. Type of name %s in %s";
                     QueueItem entry3 = QueueItem.create("Geonames 1000", "names", DatasetType.Shapefile, drv3, titleFields3, titleFieldFormat3, descFields3, descFieldFormat3, null, null, 4326);
                     IndexerQueue.enqueue(entry3);
-                    r.setData("Added two layers to index", true);
+
+                    ShapefileDriver drv4 = new ShapefileDriver(Settings.SHAPEDIR + "/poilux.shp");
+                    List<String> titleFields4 = asList("name");
+                    String titleFieldFormat4 = "%s";
+                    List<String> descFields4 = asList("wazetype", "osmtype");
+                    String descFieldFormat4 = "%s (%s)";
+                    QueueItem entry4 = QueueItem.create("SPOI", "poi", DatasetType.Shapefile, drv4, titleFields4, titleFieldFormat4, descFields4, descFieldFormat4, null, null, 4326);
+                    IndexerQueue.enqueue(entry4);
+
+                    r.setData("Added three layers to index", true);
                     break;
                 case "EnqueueShapefile":
-                    Map<String, Boolean> reqFields = new HashMap<String, Boolean>();
-                    reqFields.put("shapefileName", true);
-                    reqFields.put("titleFields", true);
-                    reqFields.put("titleFormat", true);
-                    reqFields.put("descriptionFields", true);
-                    reqFields.put("descriptionFormat", true);
-                    reqFields.put("additionalFields", true);
-                    reqFields.put("jsonDataFields", true);
-                    Map<String, String> avFields = HttpParam.GetParameters(request, reqFields, r);
+                    Map<String, String> flds = RequestUtils.GetParams(
+                            request,
+                            r,
+                            new String[]{
+                                "shapefileName",
+                                "titleFields",
+                                "titleFormat",
+                                "descriptionFields",
+                                "descriptionFormat"
+                            },
+                            new String[]{
+                                "additionalFields",
+                                "jsonDataFields"
+                            });
+                    if (r.status != Status.success) {
+                        break;
+                    }
+                    ShapefileDriver d = new ShapefileDriver(flds.get("shapefileName"));
                     break;
                 default:
                     r.setError("Unsupported action: " + action);
@@ -100,12 +117,17 @@ public class Index extends HttpServlet {
             }
 
             r.setSuccess();
+
         } catch (Exception e) {
+
             r.setError("An error occurred: " + e.toString());
+
         }
 
         try (PrintWriter out = response.getWriter()) {
+
             out.print(r.asJson());
+
         }
 
     }
