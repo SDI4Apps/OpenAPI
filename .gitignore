@@ -1,4 +1,8 @@
 /target/
 nbactions.xml
 nb-configuration.xml
-*-*.properties
+openapi-local.properties
+openapi-remote.properties
+openapi-local-backup.properties
+/src/main/resources/openapi.properties
+/src/main/webapp/WEB-INF/classes/openapi.properties
