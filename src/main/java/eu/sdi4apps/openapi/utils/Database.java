@@ -3,6 +3,7 @@ package eu.sdi4apps.openapi.utils;
 import eu.sdi4apps.openapi.config.DbParams;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -45,6 +46,21 @@ public class Database {
         Class.forName("org.postgresql.Driver");
         String url = dbParams.getJdbcUrl();
         return new Database(url);
+    }
+    
+    /**
+     * Create a prepared statement
+     * 
+     * @param sql
+     * @return
+     * @throws SQLException 
+     */
+    public PreparedStatement Prepare(String sql) throws SQLException {
+        if (connection.isValid(0)) {
+            return connection.prepareStatement(sql);
+        } else {
+            return null;
+        }
     }
 
     /**

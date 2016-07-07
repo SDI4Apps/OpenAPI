@@ -15,11 +15,11 @@ import org.apache.commons.lang.StringUtils;
  *
  * @author runarbe
  */
-public class HttpParam {
+public class RequestUtils {
 
-    public static Map<String, String> GetParameters(HttpServletRequest request, Map<String, Boolean> fields, Response r) {
+    public static Map<String, String> GetParams(HttpServletRequest request, Map<String, Boolean> fields, Response r) {
 
-        Map<String, String> m = new LinkedHashMap<String, String>();
+        Map<String, String> m = new LinkedHashMap<>();
 
         for (Map.Entry<String, Boolean> e : fields.entrySet()) {
             String key = e.getKey();
@@ -29,6 +29,39 @@ public class HttpParam {
             }
             m.put(e.getKey(), value);
         }
+        return m;
+    }
+
+    public static Map<String, String> GetParams(HttpServletRequest request, Response r, String[] required) {
+
+        return GetParams(request, r, required, null);
+    }
+
+    public static Map<String, String> GetParams(HttpServletRequest request, Response r, String[] required, String[] optional) {
+
+        Map<String, String> m = new LinkedHashMap<>();
+        for (String reqFieldname : required) {
+            String tmpVar = request.getParameter(reqFieldname);
+            if (tmpVar != null) {
+                m.put(reqFieldname, tmpVar);
+            } else {
+                m.put(reqFieldname, null);
+                r.missingParam(reqFieldname);
+            }
+        }
+
+        if (optional != null) {
+            for (String optFieldname : optional) {
+                String tmpVar = request.getParameter(optFieldname);
+                if (tmpVar != null) {
+                    m.put(optFieldname, tmpVar);
+                } else {
+                    m.put(optFieldname, null);
+                    r.optionalParam(optFieldname);
+                }
+            }
+        }
+
         return m;
     }
 

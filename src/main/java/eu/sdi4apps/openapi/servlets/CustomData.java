@@ -23,7 +23,7 @@ import javax.servlet.http.HttpServletResponse;
  *
  * @author runarbe
  */
-@WebServlet(name = "CustomData", urlPatterns = {"/CustomData"})
+@WebServlet(name = "customdata", urlPatterns = {"/customdata"})
 public class CustomData extends HttpServlet {
 
     /**
@@ -41,9 +41,9 @@ public class CustomData extends HttpServlet {
         response = EnableCors(response);
 
         DataResponse jr = new DataResponse();
-        
+
         jr.parameters = request.getQueryString();
-        
+
         try {
 
             String action = request.getParameter("action");
@@ -54,25 +54,20 @@ public class CustomData extends HttpServlet {
 
             switch (action) {
                 case "CreateApplication":
-                    String applicationTitle = request.getParameter("title");
-                    if (applicationTitle == null) {
-                        jr.missingParam("title");
-                    } else {
-                        jr.mergeResponse(CustomApplication.CreateApplication(applicationTitle));
-                    }
+                    jr.mergeResponse(CustomDb.createApplication(request));
                     break;
                 case "DeleteApplication":
-                    int applicationId = Integer.parseInt(request.getParameter("id"));
-                    jr.mergeResponse(CustomApplication.DeleteApplication(applicationId));
+                    jr.mergeResponse(CustomDb.deleteApplication(request));
                     break;
                 case "ListApplications":
-                    jr.mergeResponse(CustomApplication.ListApplications());
+                    jr.mergeResponse(CustomDb.listApplications(request));
                     break;
                 case "CreateType":
                     break;
                 case "ListTypes":
                     break;
                 case "AddObject":
+                    jr.mergeResponse(CustomDb.addObject(request));
                     break;
                 case "UpdateObject":
                     break;

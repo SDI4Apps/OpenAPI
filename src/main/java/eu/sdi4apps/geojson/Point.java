@@ -3,20 +3,16 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package eu.sdi4apps.customdata.types;
-
-import eu.sdi4apps.openapi.types.Response;
+package eu.sdi4apps.geojson;
 
 /**
  *
  * @author runarbe
  */
-public class CustomObject {
-
-    Integer id;
-    Integer user_id;
-    Integer ctype_id;
-    Integer capplication_id;
-    Object data;
+public class Point extends Geometry {
+    
+    public Point() {
+        this.type = "Point";
+    }
     
 }

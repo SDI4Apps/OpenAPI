@@ -1,7 +1,7 @@
 package eu.sdi4apps.ftgeosearch;
 
 import eu.sdi4apps.openapi.utils.Logger;
-import eu.sdi4apps.ftgeosearch.drivers.OGRDriver;
+import eu.sdi4apps.indexer.drivers.OGRDriver;
 import com.cedarsoftware.util.io.JsonWriter;
 import java.sql.Array;
 import java.sql.PreparedStatement;
@@ -31,7 +31,7 @@ public class QueueItem {
     /**
      * Time when the dataset was enqueued
      */
-    public DateTime enqueued = null;
+    public String enqueued = null;
 
     /**
      * Time when the dataset was indexed
