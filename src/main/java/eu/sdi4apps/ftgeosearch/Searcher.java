@@ -6,11 +6,6 @@
 package eu.sdi4apps.ftgeosearch;
 
 import com.spatial4j.core.context.SpatialContext;
-import com.spatial4j.core.distance.DistanceUtils;
-import static eu.sdi4apps.ftgeosearch.Indexer.maxSpatialIndexLevels;
-import static eu.sdi4apps.ftgeosearch.Indexer.spatialCtx;
-import static eu.sdi4apps.ftgeosearch.Indexer.spatialPrefixTree;
-import static eu.sdi4apps.ftgeosearch.Indexer.spatialStrategy;
 import eu.sdi4apps.openapi.config.Settings;
 import eu.sdi4apps.openapi.types.BBox;
 import eu.sdi4apps.openapi.utils.Logger;
@@ -26,10 +21,8 @@ import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
@@ -109,7 +102,7 @@ public class Searcher {
             String filter,
             String extent) throws IOException, ParseException {
 
-        List<Object> searchResults = new ArrayList<>();
+        List searchResults = new ArrayList();
 
         try {
 

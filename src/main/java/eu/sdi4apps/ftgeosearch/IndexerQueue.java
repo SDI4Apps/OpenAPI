@@ -179,7 +179,7 @@ public class IndexerQueue {
 
         ResultSet r;
         try {
-            List<QueueItem> l = new ArrayList<>();
+            List l = new ArrayList();
             String sql = String.format("SELECT * FROM queue WHERE indexingstatus = '%s' ORDER BY enqueued ASC", IndexingStatus.Enqueued);
             Statement s = Conn.createStatement();
             s.setMaxRows(numberOfEntriesToReturn);

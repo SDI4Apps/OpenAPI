@@ -19,7 +19,7 @@ public class FeatureCollection {
     public List<Feature> features;
 
     public FeatureCollection() {
-        features = new ArrayList<>();
+        features = new ArrayList();
     }
 
     public void addFeature(Feature f) {
